@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import bodyParser from 'body-parser';
 import {filterImageFromURL, deleteLocalFiles} from './util/util';
 
@@ -8,7 +8,7 @@ import {filterImageFromURL, deleteLocalFiles} from './util/util';
   const app = express();
 
   // Set the network port
-  const port = process.env.PORT || 8082;
+  const port = process.env.PORT || 8083;
   
   // Use the body parser middleware for post requests
   app.use(bodyParser.json());
@@ -16,6 +16,27 @@ import {filterImageFromURL, deleteLocalFiles} from './util/util';
   // @TODO1 IMPLEMENT A RESTFUL ENDPOINT
   // GET /filteredimage?image_url={{URL}}
   // endpoint to filter an image from a public url.
+  app.get( "/filteredimage/", ( req: Request, res: Response ) => {
+    let { image_url } = req.query;
+    var filesToDelete : string[] = [];
+
+    if ( !image_url ) {
+      return res.status(400)
+                .send(`image_url is required`);
+    }
+
+    filterImageFromURL(image_url)
+      .then(value => {
+        var filteredpath: string = value;
+        filesToDelete.push(filteredpath);
+
+        res.sendFile(filteredpath, () => {       
+          deleteLocalFiles(filesToDelete);       
+        });   
+    })
+
+  });
+
   // IT SHOULD
   //    1
   //    1. validate the image_url query
